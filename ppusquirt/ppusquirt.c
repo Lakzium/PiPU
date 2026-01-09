@@ -22,6 +22,12 @@ int transferIds[2] = {0, 1};
 extern PPUFrame outbuf[2];
 extern int readBuf;
 
+static short back_down = 0;
+static short alt_down = 0;
+static short esc_down = 0;
+static short w_down = 0;
+static short run_save = 0;
+
 void cb_out(struct libusb_transfer *transfer);
 
 void trans_right(int num)
@@ -84,9 +90,10 @@ void *Squirt(void *threadid)
     ioctl(fd, UI_SET_KEYBIT, KEY_DOWN);
     ioctl(fd, UI_SET_KEYBIT, KEY_LEFT);
     ioctl(fd, UI_SET_KEYBIT, KEY_RIGHT);
-    ioctl(fd, UI_SET_KEYBIT, KEY_SPACE);
-    ioctl(fd, UI_SET_KEYBIT, KEY_LEFTCTRL);
+    ioctl(fd, UI_SET_KEYBIT, KEY_W);
+    ioctl(fd, UI_SET_KEYBIT, KEY_BACKSPACE);
     ioctl(fd, UI_SET_KEYBIT, KEY_LEFTALT);
+    ioctl(fd, UI_SET_KEYBIT, KEY_ENTER);
     memset(&usetup, 0, sizeof(usetup));
     usetup.id.bustype = BUS_USB;
     usetup.id.vendor = 0x1234; 
@@ -144,40 +151,116 @@ void *Squirt(void *threadid)
         r = libusb_bulk_transfer(devh, 0x86, indata, sizeof(indata), &actual_length, 0);
         if (r == 0 && actual_length == sizeof(indata))
         {
-            if (indata[0] & PAD_A)
-                emit(fd, EV_KEY, KEY_LEFTCTRL, 1);
+            if (indata[0] & PAD_A) 
+            {
+                emit(fd, EV_KEY, KEY_BACKSPACE, 1);
+                back_down = 1;
+            }
             else
-                emit(fd, EV_KEY, KEY_LEFTCTRL, 0);
+            {
+                emit(fd, EV_KEY, KEY_BACKSPACE, 0);
+                back_down = 0;
+            }
             if (indata[0] & PAD_B)
+            {
+                emit(fd, EV_KEY, KEY_ENTER, 1);
+            }
+            else
+            {
+                emit(fd, EV_KEY, KEY_ENTER, 0);
+            }
+            if (indata[0] & PAD_B)
+            {
                 emit(fd, EV_KEY, KEY_LEFTALT, 1);
+                alt_down = 1;
+            }
             else
+            {
                 emit(fd, EV_KEY, KEY_LEFTALT, 0);
+                alt_down = 0;
+            }
             if (indata[0] & PAD_START)
+            {
                 emit(fd, EV_KEY, KEY_ESC, 1);
+                esc_down = 1;
+            }
             else
+            {
                 emit(fd, EV_KEY, KEY_ESC, 0);
+                esc_down = 0;
+            }
             if (indata[0] & PAD_SELECT)
-                emit(fd, EV_KEY, KEY_SPACE, 1);
+            {
+                emit(fd, EV_KEY, KEY_W, 1);
+                w_down = 1;
+            }
             else
-                emit(fd, EV_KEY, KEY_SPACE, 0);
+            {
+                emit(fd, EV_KEY, KEY_W, 0);
+                w_down = 0;
+            }
             if (indata[0] & PAD_UP)
+            {
                 emit(fd, EV_KEY, KEY_UP, 1);
+                
+            }
             else
+            {
                 emit(fd, EV_KEY, KEY_UP, 0);
+                
+            }
             if (indata[0] & PAD_DOWN)
+            {
                 emit(fd, EV_KEY, KEY_DOWN, 1);
+                
+            }
             else
+            {
                 emit(fd, EV_KEY, KEY_DOWN, 0);
+                
+            }
             if (indata[0] & PAD_LEFT)
+            {
                 emit(fd, EV_KEY, KEY_LEFT, 1);
+                
+            }
             else
+            {
                 emit(fd, EV_KEY, KEY_LEFT, 0);
+                
+            }
             if (indata[0] & PAD_RIGHT)
+            {
                 emit(fd, EV_KEY, KEY_RIGHT, 1);
+                
+            }
             else
+            {
                 emit(fd, EV_KEY, KEY_RIGHT, 0);
+                
+            }
 
             emit(fd, EV_SYN, SYN_REPORT, 0);
+
+            // If A + B + Select buttons are held down, copy save files
+
+            if (back_down && alt_down && w_down)
+            {
+                if(!run_save)
+                {
+                    run_save = 1;
+                    int pid = fork();
+                    if (pid == 0)
+                    {
+                        execl("/bin/sh", "sh", "/opt/PiPU/savedoom.sh", (char *)NULL);
+                        _exit(0);
+                    }
+                }
+            }
+            else
+            {
+                run_save = 0;
+            }
         }
         else
         {
