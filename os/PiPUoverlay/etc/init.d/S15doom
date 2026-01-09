@@ -1,0 +1,22 @@
+#! /bin/sh
+# Init script to start doom
+
+case "$1" in
+	start|"")
+		if [ "$VERBOSE" != no ]
+		then
+			printf "Starting DOOM..."
+		fi
+
+		/opt/PiPU/rundoom.sh &
+
+		[ "$VERBOSE" != no ] && echo "done."
+		;;
+	stop)
+		killall -KILL chocolate-doom
+		;;
+	*)
+		echo "Usage: chocolatedoom {start|stop}" >&2
+		exit 1
+		;;
+esac

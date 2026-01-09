@@ -1,0 +1,8 @@
+#! /bin/sh
+# Init script to restore doom default.cfg, chocolate-doom.cfg, and save files (if added)
+
+GOODFILES="/configs"
+TARGET="/root/.local/share/chocolate-doom"
+
+cp -af "$GOODFILES/." "$TARGET/."
+
