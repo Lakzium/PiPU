@@ -108,6 +108,8 @@ Controls are as follows :
 | Select      | Change Weapon |
 | Start       | Main Menu     |
 
+* To preserve save files, press Select + Button A + Button B on NES controller. This allows them to be restored on bootup as saves are usually corrupted when the console is turned off.
+
 
 ## License ##
 
